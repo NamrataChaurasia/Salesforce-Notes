@@ -1,0 +1,602 @@
+<apex:page standardController="Offer__c">
+    <apex:form>
+        <apex:pageBlock title="Quick Edit">
+            <apex:pageBlockSection columns="4">
+                <apex:inputField value="{!Offer__c.Offer_Date__c}"/>
+                <apex:inputField value="{!Offer__c.Offer_Expiration_Date__c}"/>
+                <apex:inputField value="{!Offer__c.Status__c}"/>
+                <apex:commandButton value="Update" action="{!save}"/>
+
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:detail />
+</apex:page>
+
+<apex:page standardController="Offer__c" tabStyle="">
+    <apex:form>
+        <apex:pageBlock title="Quick Edit">          
+            <apex:pageBlockSection columns="4">
+                <apex:inputField value="{!Offer__c.Offer_Date__c}"/>
+                <apex:inputField value="{!Offer__c.Offer_Expiration_Date__c}"/>
+                <apex:inputField value="{!Offer__c.Status__c}"/>
+                <apex:commandButton value="Update" action="{!save}"/>
+
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:detail relatedList="false"/>
+    <apex:relatedList list="OpenActivities"/>
+</apex:page>
+
+<apex:page controller="CandidateController"tabStyle="CandCustCtrl__tab">
+    <apex:form>
+    <apex:pageBlock title="Candidate Edit">
+        <apex:pageBlockButtons>
+        <apex:commandButton value="Save" action="{!mySave}"/>
+        </apex:pageBlockButtons>
+        <apex:pageBlockSection title="Information">
+            <apex:inputField  value="{!candidateRef.First_Name__c}"/>
+            <apex:inputField  value="{!candidateRef.Last_Name__c}"/>
+        </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
+
+public class CandidateController {
+//Define a reference Variable for Candidate__c along with setter and getter
+//when we write setter and getter  it should always be public and not private
+//if we have using any properties that particular attribute must be public
+    public Candidate__c candidateRef{get;set;}
+    //Define Constructor to create a candidate instance(Sobject) since candidateRef will be null by default
+    public CandidateController()
+    {
+      candidateRef=new Candidate__C();
+    }
+    //Define an Action method to perform insertion
+    ////Thumb Rule:All action methods must have return type as PageReference
+    public PageReference mySave()
+    {
+        try{
+        insert candidateRef;
+        }catch(DmlException e)
+        {
+            System.debug('Probelm in insertion'+e.getMessage());
+        }
+        PageReference ref=new PageReference('/'+candidateRef.Id);
+        return ref;
+    }
+}
+
+<apex:page standardController="Candidate__c"  extensions="CandidateExtensionController" tabStyle="CandExtCtrl__tab">
+    <apex:form>
+        <apex:pageBlock title="Candidate Edit">
+            <apex:pageBlockButtons>
+                <apex:commandButton value="Save" action="{!save}"/>
+                <apex:commandButton value="MySave" action="{!mySave}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection title="Information">
+                <apex:inputField  value="{!Candidate__c.First_Name__c}"/>
+                <apex:inputField  value="{!Candidate__c.Last_Name__c}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
+
+public class CandidateExtensionController {
+    Candidate__c candidateRef;
+    //All Extension Controller must have a parameterised constructor
+    //Which Takes StandardController type as parameter
+    public CandidateExtensionController(ApexPages.StandardController sc)
+    {
+       candidateRef= (Candidate__c)sc.getRecord();
+    }
+    public PageReference mySave()
+    {
+        try{
+        insert candidateRef;
+        }catch(DmlException e)
+        {
+            System.debug('Probelm in insertion'+e.getMessage());
+        }
+        PageReference ref=new PageReference('/'+candidateRef.Id);
+        return ref;
+    }
+}
+
+Day2
+
+public class SearchController {
+    public String searchText{get;set;}
+    public List<Candidate__c> candidateList{get;set;}
+
+    //action method to fetch candidates i will use SOSQL and hence use FIND and Returning
+    public PageReference doSearch()
+    {
+      List<List<sobject>> records=  [Find :searchText Returning Candidate__c(First_Name__c,Last_Name__c,Email__c)];
+       candidateList= records[0];//List of List of sobject ,So records will be candidates
+        return null;
+    }
+}
+
+<apex:page controller="SearchController" tabStyle="CandidateSearch__tab">
+    <apex:form>
+    <apex:pageBlock>
+        <apex:pageBlockSection title="Search Candidate">
+        <apex:inputText label="Enter Search Text" value="{!searchText}"/>
+            <apex:commandButton value="Do Search" action="{!doSearch}" reRender="cd"/>
+            <!--rerender to identify what to refresh-->
+        </apex:pageBlockSection>
+        <!--id to identify what to refresh--implementation to Ajax-->
+        <apex:pageBlockSection title="Candidate Details" id="cd">
+        <apex:pageBlockTable value="{! candidateList}" var="can">
+            <apex:column value="{!can.First_Name__c}"/>
+             <apex:column value="{!can.Last_Name__c}"/>
+             <apex:column value="{!can.Email__c}"/>
+            </apex:pageBlockTable>
+        </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
+
+public with sharing class SearchController {
+    public String searchText{get;set;}
+    public List<Candidate__c> candidateList{get;set;}
+
+    //action method to fetch candidates i will use SOSQL and hence use FIND and Returning
+    public PageReference doSearch()
+    {
+      List<List<sobject>> records=  [Find :searchText Returning Candidate__c(First_Name__c,Last_Name__c,Email__c)];
+       candidateList= records[0];//List of List of sobject ,So records will be candidates
+        return null;
+    }
+}
+
+//List of 1200 accounts-create 1200 accounts
+List<Account> accList=new List<Account>();
+for(Integer i=1;i<=1200;i++)
+{
+    Account acc=new Account(Name='Acc'+i,Type='Customer');
+   // insert acc;
+    accList.add(acc);
+}
+insert accList;
+
+Day3
+
+<apex:page standardController="Account" recordSetVar="accList" tabStyle="AccountListController__tab">
+    <apex:form>
+    <apex:pageBlock title="All Accounts">
+        <apex:pageBlockButtons>
+        <apex:commandButton value="First" action="{!first}" reRender="rs"/>
+            <apex:commandButton value="Prev" action="{!previous}" reRender="rs"/>
+            <apex:commandButton value="Next" action="{!next}" reRender="rs"/>
+            <apex:commandButton value="Last" action="{!last}" reRender="rs"/>
+        </apex:pageBlockButtons>
+        <apex:pageBlockSection id="rs">
+        <apex:pageBlockTable value="{!accList}" var="acc">
+            <apex:column value="{!acc.Name}"/>
+            <apex:column value="{!acc.Type}"/>
+            </apex:pageBlockTable>
+        </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
+
+Software Development
+
+Development--->UAT---->SIT--->Production
+
+
+Production----->SandBox
+
+Scratch Orgs--->
+
+MVC--->ModelViewController
+Model-->Field
+View-->Page Layout-->
+Controller--->Validation Rules
+
+VisualForce Pages:--VF Components+HTMl+Javascript+Angular JS+Flash_Rect JS.
+
+Visual Pages Follows MVC Architecture:
+
+Every Visual Force Page will be associated with Controller( i.e Class)
+
+Types of Controller
+1)Standard Controller
+2)Custom Controller
+3)Extension Controller
+
+Standard Controller:-Has all the 6 standard Action.No Business Logic is needed
+Every Object in Salesforce is associated with a Standard Controller(i.e API Name)
+Eg:-Position Object is assocaated with Position__c
+Lead Object is associated with Lead
+Account Object is associated with Account.
+
+(Position__c,Lead,Account are internally Classes)
+
+Custom Controller:-Custom Business Logic
+No standard Actions Available,Must be build  all actions from ground up
+
+3)Extension Controller:-Combination of Standard and Custom Actions
+
+Tracking Field History and SetUp Audit Trail
+
+OWD--->public read write,public read only,private
+
+Manual Sharing
+Sharing Rule
+ROle heirarchy
+Public groups
+
+OWD--->Lookup and Master Detail
+
+for(Account acc:accList)
+{
+System.debug(acc.Name+''+acc.Type);
+}
+
+https://www.lightningdesignsystem.com/
+https://www.lightningdesignsystem.com/icons/
+
+<aura:application extends="force:slds">
+    <c:CalculatorComponent num1="100" num2="50"/>
+</aura:application>
+
+[06-07-2022 12:46 pm] Kumar, Naveen
+<aura:component >
+    <aura:attribute name="num1"
+                    type="Integer"
+                    default="0"/>
+    <aura:attribute name="num2"
+                    type="Integer"
+                    default="0"/>
+    <aura:attribute name="result"
+                    type="Double"
+                    />
+    <div class="myborder">
+        <img src="{!$Resource.Calculator}" />
+    <lightning:input name="fn" 
+                     label="First Number"
+                     value="{!v.num1}"
+                     class="myStyle"/>
+    <lightning:input name="ln" 
+                     label="Last Number"
+                     value="{!v.num2}"
+                     class="myStyle"/>
+<!--
+{!v.num1+v.num2}<br/>
+{!v.num1-v.num2}<br/>
+{!v.num1*v.num2}<br/>
+{!v.num1/v.num2}<br/>
+-->
+    <lightning:button label="Addition"
+                      iconName="utility:add"
+                      variant="brand"
+                      onclick="{!c.add}"/>
+     <lightning:button label="Subtraction"
+                      iconName="utility:dash"
+                      variant="destructive"
+                       onclick="{!c.sub}"/>
+     <lightning:button label="Multiplication"
+                      iconName="utility:close"
+                      variant="inverse"
+                       onclick="{!c.mul}"/>
+     <lightning:button label="Division"
+                      iconName="utility:division"
+                      variant="success"
+                       onclick="{!c.div}"/>
+    <div class="myResult">
+    Result is:{!v.result}
+    </div>
+    </div>
+</aura:component>
+
+[06-07-2022 12:46 pm] Kumar, Naveen
+({
+    add : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= parseInt(num1)+parseInt(num2);
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    },
+    sub : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= num1-num2;
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    },
+    mul : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= num1*num2;
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    },
+    div : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= num1/num2;
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    }
+})
+
+Day4
+
+[07-07-2022 11:10 am] Kumar, Naveen
+.THIS {
+}
+.THIS.myStyle
+{
+   width:30%; 
+}
+.THIS.myResult{
+    color:RED;
+    font-size:20px;
+}
+.THIS.myborder
+{
+    border :5px SOLID GREEN;
+    width:50%;
+}
+
+[07-07-2022 11:11 am] Kumar, Naveen
+({
+    add : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= parseInt(num1)+parseInt(num2);
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    },
+    sub : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= num1-num2;
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    },
+    mul : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= num1*num2;
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    },
+    div : function(component, event, helper) {
+        var num1=   component.get("v.num1");
+        var num2=   component.get("v.num2");
+        var result= num1/num2;
+       // alert('Form Add'+result);
+        component.set("v.result",result);
+    }
+})
+
+[07-07-2022 11:11 am] Kumar, Naveen
+<aura:component >
+    <aura:attribute name="num1"
+                    type="Integer"
+                    default="0"/>
+    <aura:attribute name="num2"
+                    type="Integer"
+                    default="0"/>
+    <aura:attribute name="result"
+                    type="Double"
+                    />
+    <div class="myborder">
+        <img src="{!$Resource.Calculator}" />
+    <lightning:input name="fn" 
+                     label="First Number"
+                     value="{!v.num1}"
+                     class="myStyle"/>
+    <lightning:input name="ln" 
+                     label="Last Number"
+                     value="{!v.num2}"
+                     class="myStyle"/>
+<!--
+{!v.num1+v.num2}<br/>
+{!v.num1-v.num2}<br/>
+{!v.num1*v.num2}<br/>
+{!v.num1/v.num2}<br/>
+-->
+    <lightning:button label="Addition"
+                      iconName="utility:add"
+                      variant="brand"
+                      onclick="{!c.add}"/>
+     <lightning:button label="Subtraction"
+                      iconName="utility:dash"
+                      variant="destructive"
+                       onclick="{!c.sub}"/>
+     <lightning:button label="Multiplication"
+                      iconName="utility:close"
+                      variant="inverse"
+                       onclick="{!c.mul}"/>
+     <lightning:button label="Division"
+                      iconName="utility:division"
+                      variant="success"
+                       onclick="{!c.div}"/>
+    </div>
+    <div class="myResult">
+    Result is:{!v.result}
+    </div>
+</aura:component>
+
+<aura:application extends="force:slds">
+    <c:CalculatorComponent num1="100" num2="50"/>
+</aura:application>
+
+[07-07-2022 11:18 am] Kumar, Naveen
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes">
+    <aura:attribute name="num1"
+                    type="Integer"
+                    default="0"/>
+    <aura:attribute name="num2"
+                    type="Integer"
+                    default="0"/>
+    <aura:attribute name="result"
+                    type="Double"
+                    />
+    <div class="myborder">
+        <img src="{!$Resource.Calculator}" />
+    <lightning:input name="fn" 
+                     label="First Number"
+                     value="{!v.num1}"
+                     class="myStyle"/>
+    <lightning:input name="ln" 
+                     label="Last Number"
+                     value="{!v.num2}"
+                     class="myStyle"/>
+<!--
+{!v.num1+v.num2}<br/>
+{!v.num1-v.num2}<br/>
+{!v.num1*v.num2}<br/>
+{!v.num1/v.num2}<br/>
+-->
+    <lightning:button label="Addition"
+                      iconName="utility:add"
+                      variant="brand"
+                      onclick="{!c.add}"/>
+     <lightning:button label="Subtraction"
+                      iconName="utility:dash"
+                      variant="destructive"
+                       onclick="{!c.sub}"/>
+     <lightning:button label="Multiplication"
+                      iconName="utility:close"
+                      variant="inverse"
+                       onclick="{!c.mul}"/>
+     <lightning:button label="Division"
+                      iconName="utility:division"
+                      variant="success"
+                       onclick="{!c.div}"/>
+    </div>
+    <div class="myResult">
+    Result is:{!v.result}
+    </div>
+</aura:component>
+
+[07-07-2022 12:38 pm] Kumar, Naveen
+<aura:application >
+    <c:OpportunityComponent />
+</aura:application>
+
+[07-07-2022 12:38 pm] Kumar, Naveen
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes" 
+                controller="OpportunityServerController"
+                access="global" >
+    <aura:attribute name="oppList" type="List"/>
+    <lightning:button label="Get All Opportunity" onclick="{!c.getAllOpps}"/>
+    <!--iterate and  display opportunity -->
+    <aura:iteration items="{!v.oppList}" var="opp">
+        <br/>
+        {!opp.Name}
+        {!opp.Amount}
+        {!opp.StageName}<br/>
+    </aura:iteration>
+</aura:component>
+
+({
+    getAllOpps : function(component, event, helper) {
+//    alert("getAllOps")
+//    1.Get reference to server side method
+//    If the name in ComponentController and apex class
+//    Controller file are same it will lead to stack over flow error
+    var action= component.get("c.getAllOpportunities");  
+        //2.register call back function
+        //this take 2 arguments this and a anonymous function
+        action.setCallback(this,function(response)
+                           {
+                               //3.check state and process the response
+                               var state =  response.getState();
+                             var result=  response.getReturnValue();
+                               component.set("v.oppList",result);
+                           });              
+            //4.put the call in a queue            
+                $A.enqueueAction(action)    ;    
+    }
+})
+
+https://developer.salesforce.com/docs/atlas.en-us.lightning.meta/lightning/components_names.htm
+
+public class OpportunityServerController {
+    @AuraEnabled
+    public static List<Opportunity> getAllOpportunities()
+    {
+        return [SELECT Name,Amount,StageName FROM Opportunity];
+    }
+}
+
+[07-07-2022 12:54 pm] Kumar, Naveen
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes" 
+                controller="OpportunityServerController"
+                access="global" >
+    <aura:attribute name="oppList" type="List"/>
+    <lightning:button label="Get All Opportunity" onclick="{!c.getAllOpps}"/>
+     <lightning:button label="Get Won Opportunity" onclick="{!c.getWonOpps}"/>
+    <!--iterate and  display opportunity -->
+    <aura:iteration items="{!v.oppList}" var="opp">
+        <br/>
+        {!opp.Name}
+        {!opp.Amount}
+        {!opp.StageName}<br/>
+    </aura:iteration>
+</aura:component>
+
+({
+    getAllOpps : function(component, event, helper) {
+      helper.serverCall(component,"c.getAllOpportunities","v.oppList")
+    },
+    getWonOpps:function(component, event, helper) {
+    helper.serverCall(component,"c.getWonOpportunities","v.oppList")
+    }
+})
+
+({
+    serverCall : function(component,methodName,attributeName) {
+        //    alert("getAllOps")
+        //    1.Get reference to server side method
+        //    If the name in ComponentController and apex class
+        //    Controller file are same it will lead to stack over flow error
+        var action= component.get(methodName);  
+        //2.register call back function
+        //this take 2 arguments this and a anonymous function
+        action.setCallback(this,function(response)
+                           {
+                               //3.check state and process the response
+                               var state =  response.getState();
+                               if(state="SUCCESS")
+                               {
+                                   var result=  response.getReturnValue();
+                                   component.set(attributeName,result);
+                               }else
+                               {
+                                   alert("Problem.......... server call");
+                               }
+                           });              
+        //4.put the call in a queue            
+        $A.enqueueAction(action)    ;
+    }
+})
+
+public class OpportunityServerController {
+    @AuraEnabled
+    public static List<Opportunity> getAllOpportunities()
+    {
+        return [SELECT Name,Amount,StageName FROM Opportunity];
+    }
+     @AuraEnabled
+    public static List<Opportunity> getWonOpportunities()
+    {
+        return [SELECT Name,Amount,StageName FROM Opportunity where StageName='Closed Won'];
+    }
+}
+
+https://developer.salesforce.com/docs/component-library/documentation/en/lwc
+C:\Program Files\Salesforce CLI\bin
+https://code.visualstudio.com/download
+https://developer.salesforce.com/docs/platform/salesforce-slack-sdk/guide/setup-your-env.html
+sfdx force:org:create -s -f config/project-scratch-def.json -a "LWC"
+https://certtracker-developer-edition.na158.force.com/requestcertvoucher/
